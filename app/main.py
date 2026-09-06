@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from app.config import DATABASE_PATH, DATA_DIR, UPLOADS_DIR
+from app.config import DATABASE_PATH, DATA_DIR, INDEXES_DIR, UPLOADS_DIR
 from app.generation.answer import answer_question
 from app.ingestion.image import ingest_image
 from app.ingestion.pdf import ingest_pdf
@@ -20,6 +20,7 @@ from app.processing.event_builder import process_source
 from app.retrieval.vector_store import build_index
 from app.semantic.enricher import enrich_source
 from app.storage.database import (
+    delete_source,
     get_event_observations,
     get_observation,
     get_source,
@@ -141,6 +142,19 @@ def _concise_error(exc: Exception) -> str:
     return message[:300] if message else exc.__class__.__name__
 
 
+def _delete_path_under_data(path: Path) -> None:
+    resolved = path.resolve()
+    data_root = DATA_DIR.resolve()
+    try:
+        resolved.relative_to(data_root)
+    except ValueError:
+        return
+    if resolved.is_file():
+        resolved.unlink(missing_ok=True)
+    elif resolved.is_dir():
+        shutil.rmtree(resolved, ignore_errors=True)
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -164,6 +178,24 @@ def api_source(source_id: str) -> dict[str, Any]:
     if source is None:
         raise HTTPException(status_code=404, detail="Source not found.")
     return _source_payload(source)
+
+
+@app.delete("/api/sources/{source_id}", status_code=204)
+def api_delete_source(source_id: str) -> None:
+    initialize_database(DATABASE_PATH)
+    source = get_source(source_id, DATABASE_PATH)
+    if source is None:
+        raise HTTPException(status_code=404, detail="Source not found.")
+
+    observations = list_observations_for_source(source_id, DATABASE_PATH)
+    if not delete_source(source_id, DATABASE_PATH):
+        raise HTTPException(status_code=404, detail="Source not found.")
+
+    _delete_path_under_data(Path(source.path))
+    _delete_path_under_data(INDEXES_DIR / source_id)
+    for observation in observations:
+        if observation.modality in {Modality.FRAME, Modality.IMAGE}:
+            _delete_path_under_data(Path(observation.content))
 
 
 @app.post("/api/sources/upload")

@@ -150,6 +150,61 @@ def list_sources(db_path: Path = DATABASE_PATH) -> list[Source]:
     return [_source_from_row(row) for row in rows]
 
 
+def delete_source(source_id: str, db_path: Path = DATABASE_PATH) -> bool:
+    source = get_source(source_id, db_path)
+    if source is None:
+        return False
+
+    with get_connection(db_path) as connection:
+        observation_rows = connection.execute(
+            "SELECT id FROM observations WHERE source_id = ?",
+            (source_id,),
+        ).fetchall()
+        event_rows = connection.execute(
+            "SELECT id FROM semantic_events WHERE source_id = ?",
+            (source_id,),
+        ).fetchall()
+        node_ids = [row["id"] for row in observation_rows] + [row["id"] for row in event_rows]
+
+        if node_ids:
+            placeholders = ",".join("?" for _ in node_ids)
+            connection.execute(
+                f"""
+                DELETE FROM evidence_edges
+                WHERE source_node_id IN ({placeholders})
+                   OR target_node_id IN ({placeholders})
+                """,
+                (*node_ids, *node_ids),
+            )
+
+        connection.execute(
+            """
+            DELETE FROM event_observations
+            WHERE event_id IN (
+                SELECT id FROM semantic_events WHERE source_id = ?
+            )
+               OR observation_id IN (
+                SELECT id FROM observations WHERE source_id = ?
+            )
+            """,
+            (source_id, source_id),
+        )
+        connection.execute(
+            """
+            DELETE FROM event_entities
+            WHERE event_id IN (
+                SELECT id FROM semantic_events WHERE source_id = ?
+            )
+            """,
+            (source_id,),
+        )
+        connection.execute("DELETE FROM semantic_events WHERE source_id = ?", (source_id,))
+        connection.execute("DELETE FROM observations WHERE source_id = ?", (source_id,))
+        connection.execute("DELETE FROM sources WHERE id = ?", (source_id,))
+
+    return True
+
+
 def insert_observation(observation: Observation, db_path: Path = DATABASE_PATH) -> Observation:
     with get_connection(db_path) as connection:
         connection.execute(

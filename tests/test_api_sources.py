@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from app.models import Modality, Observation, SemanticEvent, Source, SourceStatus, SourceType
 from app.storage.database import (
+    get_observation,
     get_source,
     initialize_database,
     insert_event,
@@ -124,6 +125,86 @@ def test_missing_source_returns_404(tmp_path: Path, monkeypatch) -> None:
     client = TestClient(main.app)
 
     assert client.get("/api/sources/missing").status_code == 404
+
+
+def test_delete_source_removes_database_records_and_media(tmp_path: Path, monkeypatch) -> None:
+    import app.main as main
+
+    db_path = tmp_path / "test.sqlite3"
+    data_root = tmp_path / "data"
+    upload_root = data_root / "uploads"
+    frame_root = data_root / "frames"
+    index_root = data_root / "indexes"
+    upload_root.mkdir(parents=True)
+    frame_root.mkdir(parents=True)
+    index_root.mkdir(parents=True)
+    upload_path = upload_root / "delete-me.mp4"
+    frame_path = frame_root / "frame.jpg"
+    index_path = index_root / "source-to-delete" / "events.faiss"
+    upload_path.write_bytes(b"video")
+    frame_path.write_bytes(b"frame")
+    index_path.parent.mkdir()
+    index_path.write_text("fake index", encoding="utf-8")
+    initialize_database(db_path)
+
+    monkeypatch.setattr(main, "DATABASE_PATH", db_path)
+    monkeypatch.setattr(main, "DATA_DIR", data_root)
+    monkeypatch.setattr(main, "INDEXES_DIR", index_root)
+
+    source = insert_source(
+        Source(
+            id="source-to-delete",
+            filename="delete-me.mp4",
+            source_type=SourceType.VIDEO,
+            path=str(upload_path),
+            status=SourceStatus.READY,
+        ),
+        db_path,
+    )
+    observation = insert_observation(
+        Observation(
+            id="frame-observation",
+            modality=Modality.FRAME,
+            content=str(frame_path),
+            source_id=source.id,
+            source_path=str(upload_path),
+            timestamp=1.0,
+        ),
+        db_path,
+    )
+    insert_event(
+        SemanticEvent(
+            id="event-to-delete",
+            title="Event",
+            summary="Summary",
+            source_id=source.id,
+        ),
+        db_path,
+    )
+
+    client = TestClient(main.app)
+    response = client.delete(f"/api/sources/{source.id}")
+
+    assert response.status_code == 204
+    assert get_source(source.id, db_path) is None
+    assert get_observation(observation.id, db_path) is None
+    assert list_observations_for_source(source.id, db_path) == []
+    assert list_events_for_source(source.id, db_path) == []
+    assert not upload_path.exists()
+    assert not frame_path.exists()
+    assert not index_path.parent.exists()
+
+
+def test_delete_missing_source_returns_404(tmp_path: Path, monkeypatch) -> None:
+    import app.main as main
+
+    db_path = tmp_path / "test.sqlite3"
+    initialize_database(db_path)
+    monkeypatch.setattr(main, "DATABASE_PATH", db_path)
+
+    client = TestClient(main.app)
+
+    assert client.delete("/api/sources/missing").status_code == 404
 
 
 def test_env_example_contains_only_gemini_placeholders() -> None:
