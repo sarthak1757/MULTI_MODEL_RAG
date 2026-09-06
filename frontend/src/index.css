@@ -290,6 +290,19 @@ button:disabled {
   margin-bottom: 18px;
 }
 
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.sectionHeader h2 {
+  margin: 4px 0 0;
+  font-size: 20px;
+}
+
 .activeSource {
   display: flex;
   justify-content: space-between;
@@ -370,6 +383,19 @@ textarea {
   padding: 12px;
 }
 
+.questionActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.suggestedQuestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .primaryButton {
   background: #2f6fed;
   border-color: #4f8cff;
@@ -385,7 +411,8 @@ textarea {
 }
 
 .answerStats {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -418,6 +445,13 @@ textarea {
   background: #0c1117;
 }
 
+.evidenceSections {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(180px, 0.7fr);
+  gap: 16px;
+  align-items: start;
+}
+
 .cardHeader {
   display: flex;
   justify-content: space-between;
@@ -430,6 +464,8 @@ textarea {
 
 .score {
   color: #7ee787;
+  white-space: nowrap;
+  font-weight: 700;
 }
 
 .chips {
@@ -443,6 +479,27 @@ textarea {
   border-radius: 999px;
   padding: 4px 10px;
   color: #c8d3df;
+}
+
+.compactChips span {
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+.ocrList {
+  display: grid;
+  gap: 8px;
+}
+
+.ocrList p {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 8px;
+  margin: 0;
+}
+
+.ocrList time {
+  color: #79a7ff;
 }
 
 .frames {
@@ -474,14 +531,33 @@ textarea {
 
 .timelineItem {
   display: grid;
-  grid-template-columns: 70px 1fr;
+  grid-template-columns: 70px minmax(0, 1fr);
   border-left: 2px solid #303946;
-  padding-left: 12px;
+  padding: 4px 0 14px 12px;
+}
+
+.timelineItem time {
+  color: #79a7ff;
+  font-weight: 700;
 }
 
 .timelineItem.highlight {
   border-left-color: #4f8cff;
   color: #dbeafe;
+}
+
+.timelineBody {
+  min-width: 0;
+}
+
+.timelineBody strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.timelineBody p {
+  margin: 6px 0 10px;
+  color: #9fb0c3;
 }
 
 .modalBackdrop {
@@ -565,5 +641,14 @@ textarea {
 
   .frames {
     grid-template-columns: 1fr;
+  }
+
+  .answerStats,
+  .evidenceSections {
+    grid-template-columns: 1fr;
+  }
+
+  .questionActions {
+    display: grid;
   }
 }

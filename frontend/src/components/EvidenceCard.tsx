@@ -16,15 +16,27 @@ export default function EvidenceCard({ event }: { event: EvidenceEvent }) {
           <h3>{event.title}</h3>
           <p>{fmt(event.start_time)} - {fmt(event.end_time)}</p>
         </div>
-        <span className="score">score {event.score.toFixed(3)}</span>
+        <span className="score">{Math.round(event.score * 100)}% match</span>
       </div>
-      <h4>Transcript</h4>
-      <p>{event.transcript || "No transcript evidence."}</p>
-      <h4>Raw OCR</h4>
-      {event.ocr.length ? event.ocr.map((item, index) => <p key={index}>{fmt(item.timestamp)} · {item.text}</p>) : <p>No OCR evidence.</p>}
-      <h4>Entities</h4>
-      <div className="chips">
-        {event.entities.length ? event.entities.map((entity) => <span key={entity}>{entity}</span>) : <span>None</span>}
+      <div className="evidenceSections">
+        <section>
+          <h4>Transcript</h4>
+          <p>{event.transcript || "No transcript evidence."}</p>
+        </section>
+        <section>
+          <h4>Raw OCR</h4>
+          <div className="ocrList">
+            {event.ocr.length ? event.ocr.map((item, index) => (
+              <p key={index}><time>{fmt(item.timestamp)}</time>{item.text}</p>
+            )) : <p>No OCR evidence.</p>}
+          </div>
+        </section>
+        <section>
+          <h4>Entities</h4>
+          <div className="chips">
+            {event.entities.length ? event.entities.map((entity) => <span key={entity}>{entity}</span>) : <span>None</span>}
+          </div>
+        </section>
       </div>
       <h4>Frames</h4>
       <div className="frames">
