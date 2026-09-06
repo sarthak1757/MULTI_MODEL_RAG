@@ -1,5 +1,5 @@
 import { useState, type KeyboardEvent, type MouseEvent } from "react";
-import type { Source } from "../types/api";
+import type { Source, SourceStatus } from "../types/api";
 
 interface Props {
   sources: Source[];
@@ -14,10 +14,23 @@ function labelType(type: string): string {
   return type.charAt(0).toUpperCase() + type.slice(1);
 }
 
+const FILTERS: Array<"all" | SourceStatus> = ["all", "ready", "processing", "failed", "uploaded"];
+
 export default function SourceSidebar({ sources, activeSourceId, onSelect, onAdd, onRetry, onDelete }: Props) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [busySourceId, setBusySourceId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{ sourceId: string; message: string } | null>(null);
+  const [filter, setFilter] = useState<"all" | SourceStatus>("all");
+
+  const filteredSources = filter === "all" ? sources : sources.filter((source) => source.status === filter);
+  const counts = sources.reduce<Record<string, number>>(
+    (accumulator, source) => {
+      accumulator.all += 1;
+      accumulator[source.status] += 1;
+      return accumulator;
+    },
+    { all: 0, uploaded: 0, processing: 0, ready: 0, failed: 0 }
+  );
 
   const stopAction = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -61,12 +74,29 @@ export default function SourceSidebar({ sources, activeSourceId, onSelect, onAdd
   return (
     <aside className="sidebar">
       <div className="sidebarHeader">
-        <h2>Sources</h2>
+        <div>
+          <h2>Sources</h2>
+          <span className="sidebarCount">{sources.length} total</span>
+        </div>
         <button className="ghostButton" onClick={onAdd}>+ Add Source</button>
+      </div>
+      <div className="sourceFilters" aria-label="Source filters">
+        {FILTERS.map((item) => (
+          <button
+            key={item}
+            className={filter === item ? "active" : ""}
+            onClick={() => setFilter(item)}
+            type="button"
+          >
+            <span>{labelType(item)}</span>
+            <strong>{counts[item]}</strong>
+          </button>
+        ))}
       </div>
       <div className="sourceList">
         {sources.length === 0 && <p className="muted">No sources yet.</p>}
-        {sources.map((source) => (
+        {sources.length > 0 && filteredSources.length === 0 && <p className="muted">No {filter} sources.</p>}
+        {filteredSources.map((source) => (
           <div
             key={source.id}
             className={`sourceItem ${source.id === activeSourceId ? "active" : ""} ${source.status}`}
