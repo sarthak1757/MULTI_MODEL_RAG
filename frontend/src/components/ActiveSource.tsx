@@ -12,6 +12,20 @@ function formatDuration(seconds: number | null): string {
   return `${minutes}m ${remainder}s`;
 }
 
+function formatCreatedAt(value: string | undefined): string {
+  if (!value) return "created date unknown";
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(value));
+}
+
+function label(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 export default function ActiveSource({ source, onChangeSource }: Props) {
   return (
     <section className="panel activeSource">
@@ -20,7 +34,12 @@ export default function ActiveSource({ source, onChangeSource }: Props) {
         {source ? (
           <>
             <h2>{source.filename}</h2>
-            <p>{source.source_type.toUpperCase()} · {formatDuration(source.duration)}</p>
+            <div className="metadataRow">
+              <span>{label(source.source_type)}</span>
+              <span>{formatDuration(source.duration)}</span>
+              <span>{formatCreatedAt(source.created_at)}</span>
+            </div>
+            {source.error_message && <p className="sourceError">{source.error_message}</p>}
           </>
         ) : (
           <>
@@ -30,8 +49,8 @@ export default function ActiveSource({ source, onChangeSource }: Props) {
         )}
       </div>
       <div className="statusBlock">
-        <span className={`status ${source?.status ?? "uploaded"}`}>{source?.status === "ready" ? "Ready ✓" : source?.status ?? "None"}</span>
-        <button onClick={onChangeSource}>Change Source</button>
+        <span className={`statusPill ${source?.status ?? "uploaded"}`}>{source ? label(source.status) : "None"}</span>
+        <button className="ghostButton" onClick={onChangeSource}>Change Source</button>
       </div>
     </section>
   );

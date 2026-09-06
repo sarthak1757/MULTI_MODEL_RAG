@@ -29,6 +29,13 @@ export default function App() {
     [sources, activeSourceId]
   );
 
+  const sourceStats = useMemo(() => ({
+    total: sources.length,
+    ready: sources.filter((source) => source.status === "ready").length,
+    processing: sources.filter((source) => source.status === "processing").length,
+    failed: sources.filter((source) => source.status === "failed").length
+  }), [sources]);
+
   async function refreshSources(selectId?: string): Promise<Source[]> {
     const nextSources = await getSources();
     setSources(nextSources);
@@ -173,9 +180,39 @@ export default function App() {
       />
       <main className="mainContent">
         <header className="hero">
-          <h1>Multimodal Event RAG</h1>
-          <p>Event-centric retrieval across transcript, video frames, OCR and evidence relationships.</p>
+          <div>
+            <span className="eyebrow">Multimodal Retrieval</span>
+            <h1>Event RAG Workspace</h1>
+            <p>Review ingested sources, inspect timeline evidence, and ask grounded questions across transcript, OCR, frames, PDFs, and images.</p>
+          </div>
+          <button className="primaryButton" onClick={() => setUploadOpen(true)}>Add Source</button>
         </header>
+        <section className="overviewGrid" aria-label="Workspace status">
+          <div>
+            <strong>{sourceStats.total}</strong>
+            <span>Sources</span>
+          </div>
+          <div>
+            <strong>{sourceStats.ready}</strong>
+            <span>Ready</span>
+          </div>
+          <div>
+            <strong>{sourceStats.processing}</strong>
+            <span>Processing</span>
+          </div>
+          <div>
+            <strong>{events.length}</strong>
+            <span>Events</span>
+          </div>
+          <div>
+            <strong>{answer?.evidence.length ?? 0}</strong>
+            <span>Evidence Hits</span>
+          </div>
+          <div>
+            <strong>{sourceStats.failed}</strong>
+            <span>Failed</span>
+          </div>
+        </section>
         {error && <div className="errorBanner">{error}</div>}
         <ActiveSource source={activeSource} onChangeSource={() => setUploadOpen(false)} />
         <ProcessingProgress result={processResult} processing={processing} />
