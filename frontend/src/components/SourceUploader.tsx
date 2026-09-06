@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { UploadCloud, X } from "lucide-react";
 import type { ProcessResult } from "../types/api";
 
 interface Props {
@@ -46,7 +47,7 @@ export default function SourceUploader({ open, onClose, onUploadAndProcess }: Pr
             <span className="eyebrow">New Source</span>
             <h2>Upload & Process</h2>
           </div>
-          <button className="ghostButton" onClick={onClose}>Close</button>
+          <button className="ghostButton iconOnlyButton" onClick={onClose} aria-label="Close upload dialog"><X size={17} /></button>
         </div>
         <label className="uploadBox">
           <input
@@ -58,7 +59,7 @@ export default function SourceUploader({ open, onClose, onUploadAndProcess }: Pr
               setError(null);
             }}
           />
-          <strong>{file ? "Replace Selected File" : "Choose Video, PDF, Or Image"}</strong>
+          <strong><UploadCloud size={19} />{file ? "Replace Selected File" : "Choose Video, PDF, Or Image"}</strong>
           <span>MP4, MOV, MKV, PDF, PNG, JPG, JPEG</span>
         </label>
         {file && (
@@ -72,8 +73,8 @@ export default function SourceUploader({ open, onClose, onUploadAndProcess }: Pr
         )}
         <div className="modalActions">
           <button className="ghostButton" disabled={processing} onClick={onClose}>Cancel</button>
-          <button className="primaryButton" disabled={!file || processing} onClick={handleProcess}>
-            {processing ? "Processing..." : "Upload & Process"}
+          <button className="primaryButton iconTextButton" disabled={!file || processing} onClick={handleProcess}>
+            <UploadCloud size={15} />{processing ? "Processing..." : "Upload & Process"}
           </button>
         </div>
         {processing && <p className="muted">Processing can take a few minutes for video sources.</p>}

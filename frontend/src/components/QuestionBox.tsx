@@ -1,3 +1,5 @@
+import { SendHorizontal } from "lucide-react";
+
 interface Props {
   question: string;
   disabled: boolean;
@@ -14,7 +16,7 @@ const SUGGESTED_QUESTIONS = [
 
 export default function QuestionBox({ question, disabled, loading, onChange, onAsk }: Props) {
   return (
-    <section className="panel">
+    <section className="panel questionPanel">
       <div className="sectionHeader">
         <div>
           <span className="eyebrow">Question</span>
@@ -31,8 +33,8 @@ export default function QuestionBox({ question, disabled, loading, onChange, onA
             </button>
           ))}
         </div>
-        <button className="primaryButton" disabled={disabled || loading || !question.trim()} onClick={onAsk}>
-          {loading ? "Asking..." : "Ask"}
+        <button className="primaryButton iconTextButton" disabled={disabled || loading || !question.trim()} onClick={onAsk}>
+          <SendHorizontal size={15} />{loading ? "Asking..." : "Ask source"}
         </button>
       </div>
     </section>

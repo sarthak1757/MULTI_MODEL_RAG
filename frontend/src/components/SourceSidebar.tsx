@@ -1,4 +1,5 @@
 import { useState, type KeyboardEvent, type MouseEvent } from "react";
+import { Plus, RotateCcw, Trash2 } from "lucide-react";
 import type { Source, SourceStatus } from "../types/api";
 
 interface Props {
@@ -57,7 +58,7 @@ export default function SourceSidebar({ sources, activeSourceId, onSelect, onAdd
     }
   };
 
-  const deleteFailedSource = async (event: MouseEvent<HTMLButtonElement>, source: Source) => {
+  const deleteSource = async (event: MouseEvent<HTMLButtonElement>, source: Source) => {
     stopAction(event);
     setBusySourceId(source.id);
     setActionError(null);
@@ -78,7 +79,7 @@ export default function SourceSidebar({ sources, activeSourceId, onSelect, onAdd
           <h2>Sources</h2>
           <span className="sidebarCount">{sources.length} total</span>
         </div>
-        <button className="ghostButton" onClick={onAdd}>+ Add Source</button>
+        <button className="ghostButton iconTextButton" onClick={onAdd}><Plus size={14} />Add</button>
       </div>
       <div className="sourceFilters" aria-label="Source filters">
         {FILTERS.map((item) => (
@@ -113,52 +114,52 @@ export default function SourceSidebar({ sources, activeSourceId, onSelect, onAdd
               {source.status === "failed" && actionError?.sourceId === source.id && (
                 <small className="sourceError">{actionError.message}</small>
               )}
-              {source.status === "failed" && (
-                confirmDeleteId === source.id ? (
-                  <div className="sourceConfirm" onClick={(event) => event.stopPropagation()}>
-                    <small>Delete this failed source?</small>
-                    <div className="sourceActions">
-                      <button
-                        className="compactButton"
-                        disabled={busySourceId === source.id}
-                        onClick={(event) => {
-                          stopAction(event);
-                          setConfirmDeleteId(null);
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        className="compactButton dangerButton"
-                        disabled={busySourceId === source.id}
-                        onClick={(event) => deleteFailedSource(event, source)}
-                      >
-                        {busySourceId === source.id ? "Deleting..." : "Confirm Delete"}
-                      </button>
-                    </div>
+              {confirmDeleteId === source.id ? (
+                <div className="sourceConfirm" onClick={(event) => event.stopPropagation()}>
+                  <small>Delete this source and its index?</small>
+                  <div className="sourceActions">
+                    <button
+                      className="compactButton"
+                      disabled={busySourceId === source.id}
+                      onClick={(event) => {
+                        stopAction(event);
+                        setConfirmDeleteId(null);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="compactButton dangerButton"
+                      disabled={busySourceId === source.id}
+                      onClick={(event) => deleteSource(event, source)}
+                    >
+                      {busySourceId === source.id ? "Deleting..." : "Confirm Delete"}
+                    </button>
                   </div>
-                ) : (
-                  <div className="sourceActions" onClick={(event) => event.stopPropagation()}>
+                </div>
+              ) : (
+                <div className="sourceActions" onClick={(event) => event.stopPropagation()}>
+                  {source.status === "failed" && (
                     <button
                       className="compactButton"
                       disabled={busySourceId === source.id}
                       onClick={(event) => retryFailedSource(event, source)}
                     >
-                      {busySourceId === source.id ? "Retrying..." : "Retry"}
+                      <RotateCcw size={12} />{busySourceId === source.id ? "Retrying..." : "Retry"}
                     </button>
-                    <button
-                      className="compactButton dangerButton"
-                      disabled={busySourceId === source.id}
-                      onClick={(event) => {
-                        stopAction(event);
-                        setActionError(null);
-                        setConfirmDeleteId(source.id);
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                )
+                  )}
+                  <button
+                    className="compactButton dangerButton"
+                    disabled={busySourceId === source.id}
+                    onClick={(event) => {
+                      stopAction(event);
+                      setActionError(null);
+                      setConfirmDeleteId(source.id);
+                    }}
+                  >
+                    <Trash2 size={12} />Delete
+                  </button>
+                </div>
               )}
             </span>
           </div>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Plus, Radio } from "lucide-react";
 import { askQuestion, deleteSource, getEvents, getSource, getSources, processSource, uploadSource } from "./api/client";
 import ActiveSource from "./components/ActiveSource";
 import AnswerPanel from "./components/AnswerPanel";
@@ -167,6 +168,7 @@ export default function App() {
   }
 
   const highlightedIds = new Set(answer?.evidence.map((event) => event.event_id) ?? []);
+  const sourceHealth = sourceStats.total ? Math.round((sourceStats.ready / sourceStats.total) * 100) : 0;
 
   return (
     <div className="appShell">
@@ -179,60 +181,76 @@ export default function App() {
         onDelete={removeSource}
       />
       <main className="mainContent">
-        <header className="hero">
-          <div>
-            <span className="eyebrow">Multimodal Retrieval</span>
-            <h1>Event RAG Workspace</h1>
-            <p>Review ingested sources, inspect timeline evidence, and ask grounded questions across transcript, OCR, frames, PDFs, and images.</p>
+        <header className="topBar">
+          <div className="workspaceIdentity">
+            <span className="brandMark" aria-hidden="true"><Radio size={18} strokeWidth={2.2} /></span>
+            <div>
+              <span className="eyebrow">Multimodal retrieval</span>
+              <h1>Research Console</h1>
+            </div>
           </div>
-          <button className="primaryButton" onClick={() => setUploadOpen(true)}>Add Source</button>
+          <div className="topBarActions">
+            <span className="connectionStatus"><i /> System online</span>
+            <button className="primaryButton iconTextButton" onClick={() => setUploadOpen(true)}><Plus size={16} />Add source</button>
+          </div>
         </header>
-        <section className="overviewGrid" aria-label="Workspace status">
+        {error && <div className="errorBanner">{error}</div>}
+        <section className="workspaceIntro">
           <div>
-            <strong>{sourceStats.total}</strong>
-            <span>Sources</span>
+            <span className="eyebrow">Evidence-first analysis</span>
+            <h2>Ask across every moment in your source.</h2>
+            <p>Trace answers back to speech, OCR, frames, PDFs, and image observations without leaving the workspace.</p>
           </div>
-          <div>
-            <strong>{sourceStats.ready}</strong>
-            <span>Ready</span>
-          </div>
-          <div>
-            <strong>{sourceStats.processing}</strong>
-            <span>Processing</span>
-          </div>
-          <div>
-            <strong>{events.length}</strong>
-            <span>Events</span>
-          </div>
-          <div>
-            <strong>{answer?.evidence.length ?? 0}</strong>
-            <span>Evidence Hits</span>
-          </div>
-          <div>
-            <strong>{sourceStats.failed}</strong>
-            <span>Failed</span>
+          <div className="healthMeter" aria-label={`${sourceHealth}% of sources ready`}>
+            <div className="healthMeterHeader"><span>Library readiness</span><strong>{sourceHealth}%</strong></div>
+            <div className="meterTrack"><span style={{ width: `${sourceHealth}%` }} /></div>
+            <small>{sourceStats.ready} of {sourceStats.total} sources ready to query</small>
           </div>
         </section>
-        {error && <div className="errorBanner">{error}</div>}
-        <ActiveSource source={activeSource} onChangeSource={() => setUploadOpen(true)} />
-        <ProcessingProgress result={processResult} processing={processing} />
-        <QuestionBox
-          question={question}
-          disabled={!activeSource || activeSource.status !== "ready" || loadingAnswer}
-          loading={loadingAnswer}
-          onChange={setQuestion}
-          onAsk={handleAsk}
-        />
-        <AnswerPanel answer={answer} />
-        {answer && (
-          <section className="panel">
-            <span className="eyebrow">Retrieved Evidence</span>
-            <div className="evidenceGrid">
-              {answer.evidence.map((event) => <EvidenceCard key={event.event_id} event={event} />)}
-            </div>
+        <section className="overviewGrid" aria-label="Workspace status">
+          <div><strong>{sourceStats.total}</strong><span>Sources</span></div>
+          <div><strong>{sourceStats.ready}</strong><span>Ready</span></div>
+          <div><strong>{events.length}</strong><span>Timeline events</span></div>
+          <div><strong>{answer?.evidence.length ?? 0}</strong><span>Evidence hits</span></div>
+        </section>
+        <div className="workspaceGrid">
+          <section className="analysisColumn">
+            <QuestionBox
+              question={question}
+              disabled={!activeSource || activeSource.status !== "ready" || loadingAnswer}
+              loading={loadingAnswer}
+              onChange={setQuestion}
+              onAsk={handleAsk}
+            />
+            <AnswerPanel answer={answer} />
+            {answer && (
+              <section className="panel evidencePanel">
+                <div className="sectionHeader">
+                  <div><span className="eyebrow">Retrieved evidence</span><h2>Evidence ledger</h2></div>
+                  <span className="sectionMeta">{answer.evidence.length} ranked moments</span>
+                </div>
+                <div className="evidenceGrid">
+                  {answer.evidence.map((event) => <EvidenceCard key={event.event_id} event={event} />)}
+                </div>
+              </section>
+            )}
+            <EventTimeline events={events} highlightedIds={highlightedIds} />
           </section>
-        )}
-        <EventTimeline events={events} highlightedIds={highlightedIds} />
+          <aside className="contextRail">
+            <ActiveSource source={activeSource} onChangeSource={() => setUploadOpen(true)} />
+            <ProcessingProgress result={processResult} processing={processing} />
+            <section className="panel systemPanel">
+              <span className="eyebrow">Workspace signal</span>
+              <h2>Index overview</h2>
+              <dl>
+                <div><dt>Ready sources</dt><dd>{sourceStats.ready}</dd></div>
+                <div><dt>In processing</dt><dd>{sourceStats.processing}</dd></div>
+                <div><dt>Needs attention</dt><dd>{sourceStats.failed}</dd></div>
+              </dl>
+              <p className="muted">Every query is grounded in the source evidence stored in your local index.</p>
+            </section>
+          </aside>
+        </div>
       </main>
       <SourceUploader open={uploadOpen} onClose={() => setUploadOpen(false)} onUploadAndProcess={uploadAndProcess} />
     </div>
