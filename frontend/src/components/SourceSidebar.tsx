@@ -1,5 +1,5 @@
 import { useState, type KeyboardEvent, type MouseEvent } from "react";
-import { Plus, RotateCcw, Trash2 } from "lucide-react";
+import { FileText, Image, Plus, RotateCcw, Trash2, Video } from "lucide-react";
 import type { Source, SourceStatus } from "../types/api";
 
 interface Props {
@@ -13,6 +13,13 @@ interface Props {
 
 function labelType(type: string): string {
   return type.charAt(0).toUpperCase() + type.slice(1);
+}
+
+function SourceTypeIcon({ type }: { type: Source["source_type"] }) {
+  const props = { size: 14, strokeWidth: 1.8 };
+  if (type === "video") return <Video {...props} />;
+  if (type === "pdf") return <FileText {...props} />;
+  return <Image {...props} />;
 }
 
 const FILTERS: Array<"all" | SourceStatus> = ["all", "ready", "processing", "failed", "uploaded"];
@@ -106,10 +113,10 @@ export default function SourceSidebar({ sources, activeSourceId, onSelect, onAdd
             role="button"
             tabIndex={0}
           >
-            <span className="sourceDot" />
+            <span className="sourceTypeIcon"><SourceTypeIcon type={source.source_type} /></span>
             <span className="sourceBody">
               <strong>{source.filename}</strong>
-              <small>{labelType(source.source_type)} · {labelType(source.status)}</small>
+              <small><i className={"sourceDot " + source.status} />{labelType(source.source_type)} · {labelType(source.status)}</small>
               {source.status === "failed" && source.error_message && <small className="sourceError">{source.error_message}</small>}
               {source.status === "failed" && actionError?.sourceId === source.id && (
                 <small className="sourceError">{actionError.message}</small>
