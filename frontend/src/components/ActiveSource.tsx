@@ -50,7 +50,7 @@ export default function ActiveSource({ source, onChangeSource }: Props) {
       </div>
       <div className="statusBlock">
         <span className={`statusPill ${source?.status ?? "uploaded"}`}>{source ? label(source.status) : "None"}</span>
-        <button className="ghostButton" onClick={onChangeSource}>Change Source</button>
+        <button className="ghostButton" onClick={onChangeSource}>Upload Source</button>
       </div>
     </section>
   );

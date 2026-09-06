@@ -567,6 +567,7 @@ textarea {
   display: grid;
   place-items: center;
   padding: 20px;
+  z-index: 20;
 }
 
 .modal {
@@ -580,20 +581,56 @@ textarea {
 .modalHeader {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.modalHeader h2 {
+  margin: 4px 0 0;
 }
 
 .uploadBox {
+  display: grid;
+  gap: 8px;
   border: 1px dashed #4f8cff;
   border-radius: 8px;
   padding: 24px;
   margin: 16px 0;
+  cursor: pointer;
+  background: #0c1117;
+}
+
+.uploadBox:hover {
+  background: #121b28;
+}
+
+.uploadBox input {
+  width: 100%;
+}
+
+.uploadBox span {
+  color: #9fb0c3;
+  font-size: 13px;
 }
 
 .filePreview {
-  display: grid;
-  gap: 4px;
+  border: 1px solid #222b36;
+  border-radius: 8px;
+  background: #0c1117;
+  padding: 12px;
   margin-bottom: 14px;
+}
+
+.filePreview strong {
+  display: block;
+  margin-bottom: 10px;
+  overflow-wrap: anywhere;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .success {

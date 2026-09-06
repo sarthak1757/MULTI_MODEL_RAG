@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ProcessResult } from "../types/api";
 
 interface Props {
@@ -12,6 +12,15 @@ export default function SourceUploader({ open, onClose, onUploadAndProcess }: Pr
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setFile(null);
+      setResult(null);
+      setError(null);
+      setProcessing(false);
+    }
+  }, [open]);
 
   if (!open) return null;
 
@@ -33,27 +42,40 @@ export default function SourceUploader({ open, onClose, onUploadAndProcess }: Pr
     <div className="modalBackdrop">
       <div className="modal">
         <div className="modalHeader">
-          <h2>Upload Source</h2>
+          <div>
+            <span className="eyebrow">New Source</span>
+            <h2>Upload & Process</h2>
+          </div>
           <button className="ghostButton" onClick={onClose}>Close</button>
         </div>
-        <div className="uploadBox">
+        <label className="uploadBox">
           <input
             type="file"
             accept=".mp4,.mov,.mkv,.pdf,.png,.jpg,.jpeg"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            onChange={(event) => {
+              setFile(event.target.files?.[0] ?? null);
+              setResult(null);
+              setError(null);
+            }}
           />
-          <p>Video · PDF · Image</p>
-        </div>
+          <strong>{file ? "Replace Selected File" : "Choose Video, PDF, Or Image"}</strong>
+          <span>MP4, MOV, MKV, PDF, PNG, JPG, JPEG</span>
+        </label>
         {file && (
           <div className="filePreview">
             <strong>{file.name}</strong>
-            <span>{(file.size / (1024 * 1024)).toFixed(1)} MB</span>
-            <span>{file.type || "Unknown type"}</span>
+            <div className="metadataRow">
+              <span>{(file.size / (1024 * 1024)).toFixed(1)} MB</span>
+              <span>{file.type || "Unknown type"}</span>
+            </div>
           </div>
         )}
-        <button className="primaryButton" disabled={!file || processing} onClick={handleProcess}>
-          {processing ? "Processing..." : "Upload & Process"}
-        </button>
+        <div className="modalActions">
+          <button className="ghostButton" disabled={processing} onClick={onClose}>Cancel</button>
+          <button className="primaryButton" disabled={!file || processing} onClick={handleProcess}>
+            {processing ? "Processing..." : "Upload & Process"}
+          </button>
+        </div>
         {processing && <p className="muted">Processing can take a few minutes for video sources.</p>}
         {result && <p className="success">Source ready · {result.stats.index_events ?? 0} indexed events</p>}
         {error && <p className="errorText">{error}</p>}

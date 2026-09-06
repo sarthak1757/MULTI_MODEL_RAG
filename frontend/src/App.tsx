@@ -214,7 +214,7 @@ export default function App() {
           </div>
         </section>
         {error && <div className="errorBanner">{error}</div>}
-        <ActiveSource source={activeSource} onChangeSource={() => setUploadOpen(false)} />
+        <ActiveSource source={activeSource} onChangeSource={() => setUploadOpen(true)} />
         <ProcessingProgress result={processResult} processing={processing} />
         <QuestionBox
           question={question}
