@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from app.config import DATABASE_PATH, DATA_DIR, INDEXES_DIR, UPLOADS_DIR
 from app.generation.answer import answer_question
+from app.graph.sync import sync_source_if_configured
 from app.ingestion.image import ingest_image
 from app.ingestion.pdf import ingest_pdf
 from app.ingestion.pipeline import ingest_video
@@ -275,6 +276,8 @@ def api_process_source(source_id: str) -> dict[str, Any]:
             update_source_status(source_id, SourceStatus.READY, DATABASE_PATH)
         else:
             raise ValueError("Unsupported source type.")
+
+        stats["graph"] = sync_source_if_configured(source_id, db_path=DATABASE_PATH)
     except Exception as exc:
         error = _concise_error(exc)
         update_source_status(source_id, SourceStatus.FAILED, DATABASE_PATH, metadata={"error": error})

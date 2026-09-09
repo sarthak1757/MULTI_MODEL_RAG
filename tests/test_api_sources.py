@@ -277,6 +277,7 @@ def test_upload_process_uses_one_canonical_source_id(tmp_path: Path, monkeypatch
     monkeypatch.setattr(main, "process_source", fake_process_source)
     monkeypatch.setattr(main, "enrich_source", fake_enrich_source)
     monkeypatch.setattr(main, "build_index", fake_build_index)
+    monkeypatch.setattr(main, "sync_source_if_configured", lambda *_args, **_kwargs: {"enabled": False, "status": "skipped"})
 
     client = TestClient(main.app)
     upload_response = client.post(
@@ -289,6 +290,7 @@ def test_upload_process_uses_one_canonical_source_id(tmp_path: Path, monkeypatch
     process_response = client.post(f"/api/sources/{source_id}/process")
     assert process_response.status_code == 200
     assert process_response.json()["status"] == "ready"
+    assert process_response.json()["stats"]["graph"] == {"enabled": False, "status": "skipped"}
 
     assert get_source(source_id, db_path).status == SourceStatus.READY
     assert [observation.source_id for observation in list_observations_for_source(source_id, db_path)] == [source_id]
