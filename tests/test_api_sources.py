@@ -207,13 +207,22 @@ def test_delete_missing_source_returns_404(tmp_path: Path, monkeypatch) -> None:
     assert client.delete("/api/sources/missing").status_code == 404
 
 
-def test_env_example_contains_only_gemini_placeholders() -> None:
+def test_env_example_contains_service_configuration_placeholders() -> None:
     lines = Path(".env.example").read_text(encoding="utf-8").splitlines()
+    settings = {
+        line.split("=", 1)[0]: line.split("=", 1)[1]
+        for line in lines
+        if line and not line.startswith("#")
+    }
 
-    assert lines == [
-        "GEMINI_API_KEY=your_gemini_api_key_here",
-        "GEMINI_MODEL=gemini-3.6-flash",
-    ]
+    assert settings == {
+        "GEMINI_API_KEY": "your_gemini_api_key_here",
+        "GEMINI_MODEL": "gemini-3.6-flash",
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USERNAME": "neo4j",
+        "NEO4J_PASSWORD": "change-this-for-local-development",
+        "NEO4J_DATABASE": "neo4j",
+    }
 
 
 def test_upload_process_uses_one_canonical_source_id(tmp_path: Path, monkeypatch) -> None:
