@@ -1,4 +1,5 @@
 fastapi
+neo4j
 faster-whisper
 easyocr
 opencv-python
