@@ -54,6 +54,12 @@ Health check:
 curl http://127.0.0.1:8000/health
 ```
 
+## Optional Neo4j Graph Store
+
+The current application uses SQLite as its system of record. Neo4j is an
+optional graph projection for relationship traversal and GraphRAG features.
+See [the local Neo4j guide](docs/neo4j-local.md) to run it with Docker Compose.
+
 ## Stage 1 Video Ingestion
 
 Install dependencies, then run:
