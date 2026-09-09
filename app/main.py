@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from app.config import DATABASE_PATH, DATA_DIR, INDEXES_DIR, UPLOADS_DIR
 from app.generation.answer import answer_question
+from app.graph.explorer import get_source_graph_if_configured
 from app.graph.sync import sync_source_if_configured
 from app.ingestion.image import ingest_image
 from app.ingestion.pdf import ingest_pdf
@@ -179,6 +180,15 @@ def api_source(source_id: str) -> dict[str, Any]:
     if source is None:
         raise HTTPException(status_code=404, detail="Source not found.")
     return _source_payload(source)
+
+
+@app.get("/api/sources/{source_id}/graph")
+def api_source_graph(source_id: str) -> dict[str, Any]:
+    initialize_database(DATABASE_PATH)
+    source = _find_source(source_id)
+    if source is None:
+        raise HTTPException(status_code=404, detail="Source not found.")
+    return get_source_graph_if_configured(source_id)
 
 
 @app.delete("/api/sources/{source_id}", status_code=204)

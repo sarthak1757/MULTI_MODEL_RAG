@@ -207,6 +207,34 @@ def test_delete_missing_source_returns_404(tmp_path: Path, monkeypatch) -> None:
     assert client.delete("/api/sources/missing").status_code == 404
 
 
+def test_source_graph_endpoint_returns_optional_graph_status(tmp_path: Path, monkeypatch) -> None:
+    import app.main as main
+
+    db_path = tmp_path / "test.sqlite3"
+    initialize_database(db_path)
+    source = insert_source(
+        Source(
+            id="source-graph",
+            filename="demo.mp4",
+            source_type=SourceType.VIDEO,
+            path="data/uploads/demo.mp4",
+            status=SourceStatus.READY,
+        ),
+        db_path,
+    )
+    monkeypatch.setattr(main, "DATABASE_PATH", db_path)
+    monkeypatch.setattr(
+        main,
+        "get_source_graph_if_configured",
+        lambda source_id: {"enabled": True, "status": "ready", "graph": {"source": {"id": source_id}}},
+    )
+
+    response = TestClient(main.app).get(f"/api/sources/{source.id}/graph")
+
+    assert response.status_code == 200
+    assert response.json()["graph"]["source"]["id"] == source.id
+
+
 def test_env_example_contains_service_configuration_placeholders() -> None:
     lines = Path(".env.example").read_text(encoding="utf-8").splitlines()
     settings = {
