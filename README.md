@@ -60,6 +60,15 @@ The current application uses SQLite as its system of record. Neo4j is an
 optional graph projection for relationship traversal and GraphRAG features.
 See [the local Neo4j guide](docs/neo4j-local.md) to run it with Docker Compose.
 
+When Neo4j is configured, retrieval remains evidence-first:
+
+1. FAISS selects semantically relevant event seeds.
+2. Neo4j finds same-source events connected to those seeds through shared entities.
+3. Each graph-expanded event is fetched from SQLite with its own evidence bundle
+   before it is included in answer generation.
+
+If Neo4j is unavailable, the application continues with FAISS retrieval only.
+
 ## Stage 1 Video Ingestion
 
 Install dependencies, then run:

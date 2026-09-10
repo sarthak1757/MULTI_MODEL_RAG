@@ -254,6 +254,51 @@ def test_hybrid_retrieve_returns_evidence_bundles(tmp_path: Path, monkeypatch: p
     assert payload["results"][0]["rank"] == 1
     assert payload["results"][0]["event"]["id"] == fixture.redis_event.id
     assert payload["results"][0]["evidence_bundle"]["transcripts"][0]["id"] == fixture.transcript.id
+    assert payload["graph"] == {"enabled": False, "status": "skipped"}
+
+
+def test_hybrid_retrieve_adds_graph_connected_events_with_direct_evidence(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fixture = make_retrieval_fixture(tmp_path)
+    patch_vector_dependencies(monkeypatch)
+    monkeypatch.setattr(
+        "app.retrieval.hybrid.get_graph_expansion_if_configured",
+        lambda *_args, **_kwargs: {
+            "enabled": True,
+            "status": "ready",
+            "contexts": {
+                fixture.redis_event.id: {
+                    "entities": [{"id": fixture.redis.id, "name": "Redis"}],
+                    "related_events": [
+                        {
+                            "id": fixture.english_event.id,
+                            "shared_entities": ["Redis"],
+                        }
+                    ],
+                }
+            },
+        },
+    )
+
+    from app.retrieval.vector_store import build_index
+
+    build_index(fixture.source_id, db_path=fixture.db_path, index_root=tmp_path / "indexes")
+    payload = retrieve(
+        fixture.source_id,
+        "Redis database load",
+        top_k=1,
+        db_path=fixture.db_path,
+        index_root=tmp_path / "indexes",
+    )
+
+    assert [result["event"]["id"] for result in payload["results"]] == [
+        fixture.redis_event.id,
+        fixture.english_event.id,
+    ]
+    assert payload["results"][1]["retrieval_path"] == {
+        "type": "graph_expansion",
+        "shared_entities": ["Redis"],
+    }
+    assert payload["results"][1]["evidence_bundle"]["event"]["id"] == fixture.english_event.id
 
 
 def test_empty_and_missing_source_behavior(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

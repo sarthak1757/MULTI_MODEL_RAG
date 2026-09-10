@@ -66,3 +66,17 @@ RETURN 'Neo4j is ready' AS status;
 Cypher is Neo4j's graph-query language. `RETURN` is comparable to selecting a
 literal value in SQL. We will add labels, nodes, relationships, constraints,
 and graph queries in the next commits.
+
+## Inspect a projected source
+
+After processing a source with Neo4j configured, the application exposes its
+subgraph at:
+
+```text
+GET http://localhost:8000/api/sources/<source-id>/graph
+```
+
+The API also uses the graph for optional GraphRAG expansion. FAISS first finds
+semantic event seeds, then Neo4j adds same-source events connected through
+shared entities. The answer model still receives only events with their own
+SQLite-backed transcript, OCR, frame, image, or document evidence.

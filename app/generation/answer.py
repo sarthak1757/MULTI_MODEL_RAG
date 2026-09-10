@@ -77,6 +77,10 @@ def compact_generation_context(retrieval_payload: dict[str, Any]) -> list[dict[s
                     }
                     for entity in bundle["entities"]
                 ],
+                "retrieval_path": {
+                    "type": result.get("retrieval_path", {}).get("type", "vector"),
+                    "shared_entities": result.get("retrieval_path", {}).get("shared_entities", []),
+                },
                 "semantic_relationships": relationships[:10],
             }
         )

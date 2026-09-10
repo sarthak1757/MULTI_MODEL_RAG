@@ -196,6 +196,21 @@ def test_raw_graph_uuids_are_not_in_generation_prompt() -> None:
     assert "frame-uuid-123" in prompt
 
 
+def test_generation_context_explains_when_an_event_was_graph_expanded() -> None:
+    payload = retrieval_payload()
+    payload["results"][1]["retrieval_path"] = {
+        "type": "graph_expansion",
+        "shared_entities": ["English"],
+    }
+
+    context = compact_generation_context(payload)
+
+    assert context[1]["retrieval_path"] == {
+        "type": "graph_expansion",
+        "shared_entities": ["English"],
+    }
+
+
 def test_gemini_failure_is_handled_safely(monkeypatch) -> None:
     monkeypatch.setattr("app.generation.answer.retrieve", lambda *args, **kwargs: retrieval_payload())
 
