@@ -147,6 +147,27 @@ textarea:hover { border-color: #41645f; }
 .systemPanel dt { color: #8ba4a0; font-size: 12px; }
 .systemPanel dd { margin: 0; color: #eff7f5; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 800; }
 .systemPanel p { margin: 15px 0 0; font-size: 11px; line-height: 1.5; }
+.graphPanelHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.graphPanel h2 { display: flex; align-items: center; gap: 7px; margin: 6px 0 0; color: #eaf4f2; font-size: 17px; }
+.graphPanel .iconOnlyButton { width: 30px; height: 30px; color: #8ab4aa; }
+.graphStatus { min-height: 34px; margin: 13px 0; color: #8ca5a1; font-size: 11px; line-height: 1.45; }
+.graphStatus.ready { color: #6bdfb8; }
+.graphStatus.failed { color: #ffabb3; }
+.graphCounts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: hidden; border: 1px solid #294145; border-radius: 5px; background: #091518; }
+.graphCounts div { min-width: 0; padding: 9px 7px; border-right: 1px solid #294145; text-align: center; }
+.graphCounts div:last-child { border-right: 0; }
+.graphCounts strong, .graphCounts span { display: block; }
+.graphCounts strong { color: #dff7ee; font-size: 15px; }
+.graphCounts span { margin-top: 3px; overflow: hidden; color: #7e9995; font-size: 9px; text-overflow: ellipsis; text-transform: uppercase; }
+.graphPathHeader { display: flex; align-items: center; gap: 6px; margin-top: 15px; color: #b8cac7; font-size: 11px; font-weight: 700; }
+.graphPathHeader span { margin-left: auto; color: #63e1b8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.graphPaths { display: grid; gap: 6px; margin: 9px 0 0; padding: 0; list-style: none; }
+.graphPaths li { display: grid; gap: 3px; padding: 7px 8px; border: 1px solid #21383a; border-radius: 4px; background: #091518; }
+.graphPaths code { color: #68dcb4; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+.graphPaths span { overflow: hidden; color: #819a96; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.graphEmpty { margin: 10px 0 0; font-size: 11px; }
+.spin { animation: spin 850ms linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .checkList { display: grid; gap: 8px; padding: 0; margin: 13px 0 0; list-style: none; color: #a5bcb8; font-size: 12px; }
 .checkList li::first-letter { color: #63e1b8; }
 .modalBackdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(2, 9, 11, .78); backdrop-filter: blur(8px); }

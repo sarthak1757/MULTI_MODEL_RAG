@@ -13,7 +13,7 @@ export default function ProcessingProgress({ result, processing }: Props) {
       {processing && <p className="muted">Processing source...</p>}
       {result && (
         <ul className="checkList">
-          {Object.entries(result.stats).map(([key, value]) => (
+          {Object.entries(result.stats).filter((entry): entry is [string, number] => typeof entry[1] === "number").map(([key, value]) => (
             <li key={key}>✓ {key.replace(/_/g, " ")} — {value}</li>
           ))}
         </ul>

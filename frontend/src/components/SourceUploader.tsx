@@ -78,7 +78,7 @@ export default function SourceUploader({ open, onClose, onUploadAndProcess }: Pr
           </button>
         </div>
         {processing && <p className="muted">Processing can take a few minutes for video sources.</p>}
-        {result && <p className="success">Source ready · {result.stats.index_events ?? 0} indexed events</p>}
+        {result && <p className="success">Source ready · {typeof result.stats.index_events === "number" ? result.stats.index_events : 0} indexed events</p>}
         {error && <p className="errorText">{error}</p>}
       </div>
     </div>

@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Radio } from "lucide-react";
-import { askQuestion, deleteSource, getEvents, getSource, getSources, processSource, uploadSource } from "./api/client";
+import { askQuestion, deleteSource, getEvents, getSource, getSourceGraph, getSources, processSource, uploadSource } from "./api/client";
 import ActiveSource from "./components/ActiveSource";
 import AnswerPanel from "./components/AnswerPanel";
 import EventTimeline from "./components/EventTimeline";
+import GraphPanel from "./components/GraphPanel";
 import EvidenceCard from "./components/EvidenceCard";
 import ProcessingProgress from "./components/ProcessingProgress";
 import QuestionBox from "./components/QuestionBox";
 import SourceSidebar from "./components/SourceSidebar";
 import SourceUploader from "./components/SourceUploader";
-import type { ProcessResult, QueryResponse, Source, TimelineEvent } from "./types/api";
+import type { ProcessResult, QueryResponse, Source, SourceGraphResponse, TimelineEvent } from "./types/api";
 
 const DEFAULT_QUESTION = "Why is English useful for solving global problems?";
 
@@ -19,6 +20,8 @@ export default function App() {
   const [question, setQuestion] = useState(DEFAULT_QUESTION);
   const [answer, setAnswer] = useState<QueryResponse | null>(null);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [sourceGraph, setSourceGraph] = useState<SourceGraphResponse | null>(null);
+  const [loadingGraph, setLoadingGraph] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [processResult, setProcessResult] = useState<ProcessResult | null>(null);
@@ -77,6 +80,30 @@ export default function App() {
         setEvents([]);
         setError(err instanceof Error ? err.message : "Event endpoint unavailable.");
       });
+  }, [activeSource?.id, activeSource?.status]);
+
+  async function refreshSourceGraph(sourceId = activeSource?.id) {
+    if (!sourceId || activeSource?.status !== "ready") {
+      setSourceGraph(null);
+      return;
+    }
+    setLoadingGraph(true);
+    try {
+      setSourceGraph(await getSourceGraph(sourceId));
+    } catch (err) {
+      setSourceGraph({
+        enabled: true,
+        status: "failed",
+        error: err instanceof Error ? err.message : "Graph endpoint unavailable.",
+        graph: null
+      });
+    } finally {
+      setLoadingGraph(false);
+    }
+  }
+
+  useEffect(() => {
+    refreshSourceGraph();
   }, [activeSource?.id, activeSource?.status]);
 
   async function selectSource(source: Source) {
@@ -238,6 +265,7 @@ export default function App() {
           </section>
           <aside className="contextRail">
             <ActiveSource source={activeSource} onChangeSource={() => setUploadOpen(true)} />
+            <GraphPanel graph={sourceGraph} loading={loadingGraph} onRefresh={() => refreshSourceGraph()} />
             <ProcessingProgress result={processResult} processing={processing} />
             <section className="panel systemPanel">
               <span className="eyebrow">Workspace signal</span>

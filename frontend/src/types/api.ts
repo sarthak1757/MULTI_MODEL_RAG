@@ -15,8 +15,40 @@ export interface Source {
 export interface ProcessResult {
   source_id: string;
   status: SourceStatus;
-  stats: Record<string, number>;
+  stats: Record<string, number | GraphSyncStatus>;
   error?: string;
+}
+
+export type GraphStatus = "ready" | "not_synced" | "skipped" | "failed";
+
+export interface GraphSyncStatus {
+  enabled: boolean;
+  status: GraphStatus;
+  error?: string;
+}
+
+export interface GraphNode {
+  id: string;
+  label: "Source" | "Event" | "Observation" | "Entity";
+  properties: Record<string, unknown>;
+}
+
+export interface GraphRelationship {
+  id: string;
+  source_node_id: string;
+  target_node_id: string;
+  relation: string;
+  properties: Record<string, unknown>;
+}
+
+export interface SourceGraph {
+  source: Record<string, unknown>;
+  nodes: GraphNode[];
+  relationships: GraphRelationship[];
+}
+
+export interface SourceGraphResponse extends GraphSyncStatus {
+  graph: SourceGraph | null;
 }
 
 export interface EvidenceFrame {

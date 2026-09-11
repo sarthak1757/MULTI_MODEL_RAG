@@ -1,4 +1,4 @@
-import type { ProcessResult, QueryResponse, Source, TimelineEvent } from "../types/api";
+import type { ProcessResult, QueryResponse, Source, SourceGraphResponse, TimelineEvent } from "../types/api";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
@@ -91,4 +91,8 @@ export function askQuestion(sourceId: string, question: string): Promise<QueryRe
 
 export function getEvents(sourceId: string): Promise<TimelineEvent[]> {
   return request<TimelineEvent[]>(`/api/sources/${sourceId}/events`);
+}
+
+export function getSourceGraph(sourceId: string): Promise<SourceGraphResponse> {
+  return request<SourceGraphResponse>(`/api/sources/${sourceId}/graph`);
 }
