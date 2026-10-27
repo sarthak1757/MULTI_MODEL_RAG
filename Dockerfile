@@ -18,7 +18,9 @@ RUN useradd -m -u 1000 appuser
 WORKDIR /app
 
 # CPU-only torch keeps the image much smaller than the default CUDA build.
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+# torchvision must come from the same index: EasyOCR pulls it in transitively,
+# and a PyPI build against a different torch leaves torchvision::nms unregistered.
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
