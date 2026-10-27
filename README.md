@@ -1,12 +1,6 @@
----
-title: Multimodal RAG
-sdk: docker
-app_port: 7860
----
-
 # Multimodal RAG: Ask Questions About Videos, Images and PDFs
 
-**Live app:** `<ADD HUGGING FACE SPACE URL>`
+**Live app:** https://multimodal-rag-595510011861.asia-south1.run.app
 **Demo video:** `<ADD VIDEO URL>`
 
 ## Problem Statement
@@ -43,7 +37,7 @@ The app turns each uploaded file into **timestamped observations** (speech trans
 | Embeddings | sentence-transformers |
 | LLM | Google Gemini API |
 | Frontend | React, TypeScript, Vite |
-| Deployment | Docker, Hugging Face Spaces |
+| Deployment | Docker, Google Cloud Run |
 
 ## Architecture
 
@@ -142,6 +136,6 @@ See [docs/neo4j-local.md](docs/neo4j-local.md) to run Neo4j locally with Docker 
 
 ## Project Background and Credits
 
-`<ADD: when and why you built this, and whether it was solo. Example: "Started as a hackathon MVP in September 2026 and extended for this end-term project. Built solo.">`
+Started as a hackathon MVP in September 2026 (see the commit history) and extended into this end-term project with a React frontend, GraphRAG, and deployment. Built solo.
 
 Built with open-source libraries: FastAPI, FAISS, sentence-transformers, faster-whisper, EasyOCR, OpenCV, PyMuPDF, React and Neo4j. AI tools were used during development for coding assistance.
