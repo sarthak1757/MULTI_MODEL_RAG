@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import shutil
 from typing import Any
@@ -8,6 +9,7 @@ from uuid import uuid4
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.config import DATABASE_PATH, DATA_DIR, INDEXES_DIR, UPLOADS_DIR
@@ -41,9 +43,17 @@ app = FastAPI(
     version="0.1.0",
 )
 
+# Extra allowed origins can be set with CORS_ORIGINS (comma separated).
+DEFAULT_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
+extra_origins = os.getenv("CORS_ORIGINS", "")
+for origin in extra_origins.split(","):
+    origin = origin.strip()
+    if origin:
+        DEFAULT_ORIGINS.append(origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=DEFAULT_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -389,3 +399,10 @@ def api_source_events(source_id: str) -> list[dict[str, Any]]:
         }
         for event in list_events_for_source(source_id, DATABASE_PATH)
     ]
+
+
+# Serve the built React app (created by the Docker build) from the same server.
+# This is mounted last so the /api routes above take priority.
+FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+if FRONTEND_DIST.is_dir():
+    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
