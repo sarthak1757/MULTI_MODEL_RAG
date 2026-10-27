@@ -5,10 +5,8 @@ easyocr
 opencv-python
 pydantic
 PyMuPDF
-pytest
 python-dotenv
 python-multipart
 faiss-cpu
 sentence-transformers
-streamlit
 uvicorn[standard]
