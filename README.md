@@ -118,11 +118,22 @@ Copy `.env.example` to `.env`. Never commit `.env`.
 
 ## Deployment
 
-The app is deployed as a single Docker container on **Hugging Face Spaces**: FastAPI serves both the API and the built React app, so there is one URL.
+The app is deployed as a single Docker container on **Google Cloud Run**: FastAPI serves both the API and the built React app, so there is one URL.
 
-- Live URL: `<ADD HUGGING FACE SPACE URL>`
-- `GEMINI_API_KEY` is stored as a Space secret, not in the code.
-- The free tier has a temporary disk, so uploaded data is cleared when the Space restarts. Upload a short file to try it.
+- Live URL: https://multimodal-rag-595510011861.asia-south1.run.app
+- `GEMINI_API_KEY` is set as a Cloud Run environment variable, not committed to the repo.
+- Cloud Run's disk is in-memory and the service scales to zero, so uploaded data is cleared when the instance restarts. Upload a short file to try it.
+- To redeploy from source:
+
+  ```bash
+  gcloud run deploy multimodal-rag --source . --region asia-south1 \
+    --port 7860 --memory 4Gi --cpu 2 --timeout 900 \
+    --max-instances 1 --allow-unauthenticated \
+    --set-env-vars GEMINI_API_KEY=your_key
+  ```
+
+  `--max-instances 1` keeps a single instance so the local SQLite and FAISS files stay consistent.
+
 - To self-host: `docker build -t multimodal-rag .` then `docker run -p 7860:7860 -e GEMINI_API_KEY=your_key multimodal-rag`.
 
 ## Optional: Neo4j
