@@ -1,7 +1,17 @@
 # Multimodal RAG: Ask Questions About Videos, Images and PDFs
 
+[![CI](https://github.com/sarthak1757/MULTI_MODEL_RAG/actions/workflows/ci.yml/badge.svg)](https://github.com/sarthak1757/MULTI_MODEL_RAG/actions/workflows/ci.yml)
+![python](https://img.shields.io/badge/python-3.11-blue)
+![react](https://img.shields.io/badge/react-19-61dafb)
+![license](https://img.shields.io/badge/license-MIT-green)
+
+Upload a lecture video, a slide screenshot or a PDF, ask a question, and get an
+answer that **cites the exact frame, transcript line or page it came from**.
+
 **Live app:** https://multimodal-rag-595510011861.asia-south1.run.app
-**Demo video:** `<ADD VIDEO URL>`
+
+**Try it:** upload [`samples/tcp-lecture-notes.pdf`](samples/tcp-lecture-notes.pdf)
+and ask *"Why does TCP need three segments to open a connection?"*
 
 ## Problem Statement
 
@@ -16,6 +26,14 @@ Useful information is locked inside recordings, screenshots and documents: a lec
 ## Solution
 
 The app turns each uploaded file into **timestamped observations** (speech transcript, video frames, OCR text, PDF text). It aligns them on a timeline and groups them into **semantic events**. Events are indexed for search and linked in an **evidence graph**. When a user asks a question, the app retrieves the most relevant events, gathers their supporting evidence, and asks an LLM to answer **using only that evidence**. The answer is shown next to the source frames and transcript lines it used.
+
+## Highlights
+
+- **Three media types, one pipeline.** Video (speech + frames), images (OCR) and PDFs all become the same timestamped observations, so one retriever and one answer step serve all of them.
+- **Answers are evidence-first.** The LLM only sees the retrieved evidence bundle and must cite it; if retrieval finds too little, the app says so instead of guessing.
+- **Hybrid retrieval with graceful degradation.** FAISS semantic search, optionally expanded through a Neo4j entity graph. If Neo4j is down or unset, it falls back to FAISS-only with no code change.
+- **Tested and shipped.** 56 automated tests across ingestion, retrieval, graph and API layers, run on every push by CI alongside a type-checked frontend build. Deployed as a single Docker container on Cloud Run.
+- **Size:** ~3,900 lines of Python and ~1,100 lines of TypeScript.
 
 ## Key Features
 
@@ -96,6 +114,8 @@ npm run dev                 # opens http://localhost:5173
 ```
 
 Run the tests with `pip install -r requirements-dev.txt` and then `pytest`.
+The tests stub out the heavy models (Whisper, EasyOCR, sentence-transformers,
+Gemini), so they run in a couple of seconds and need no API key.
 
 ## Environment Variables
 
@@ -139,3 +159,7 @@ See [docs/neo4j-local.md](docs/neo4j-local.md) to run Neo4j locally with Docker 
 Started as a hackathon MVP in September 2026 (see the commit history) and extended into this end-term project with a React frontend, GraphRAG, and deployment. Built solo.
 
 Built with open-source libraries: FastAPI, FAISS, sentence-transformers, faster-whisper, EasyOCR, OpenCV, PyMuPDF, React and Neo4j. AI tools were used during development for coding assistance.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
