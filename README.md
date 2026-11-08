@@ -130,6 +130,7 @@ Copy `.env.example` to `.env`. Never commit `.env`.
 | `GEMINI_API_KEY` | Yes | Key for semantic enrichment and answer generation |
 | `GEMINI_MODEL` | No | Gemini model name (see `.env.example`) |
 | `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`, `NEO4J_DATABASE` | No | Enable the optional Neo4j graph. Leave unset to use SQLite and FAISS only |
+| `MIN_RETRIEVAL_SCORE` | No | Top retrieval score below which the app answers "insufficient evidence" without calling the LLM (default `0.2`) |
 | `CORS_ORIGINS` | No | Extra allowed origins (comma separated) if the frontend is hosted elsewhere |
 | `VITE_API_BASE_URL` | No | Frontend build setting for the API URL (defaults to `http://localhost:8000`) |
 | `WHISPER_MODEL_SIZE`, `FRAME_INTERVAL_SECONDS`, `EASYOCR_LANGUAGES`, `DATABASE_PATH` | No | Processing settings with defaults |
