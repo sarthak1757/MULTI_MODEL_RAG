@@ -8,9 +8,7 @@
 Upload a lecture video, a slide screenshot or a PDF, ask a question, and get an
 answer that **cites the exact frame, transcript line or page it came from**.
 
-**Live app:** https://multimodal-rag-595510011861.asia-south1.run.app
-
-**Try it:** upload [`samples/tcp-lecture-notes.pdf`](samples/tcp-lecture-notes.pdf)
+**Try it locally:** run the app (see Local Setup), upload [`samples/tcp-lecture-notes.pdf`](samples/tcp-lecture-notes.pdf)
 and ask *"Why does TCP need three segments to open a connection?"*
 
 ## Problem Statement
@@ -132,9 +130,8 @@ Copy `.env.example` to `.env`. Never commit `.env`.
 
 ## Deployment
 
-The app is deployed as a single Docker container on **Google Cloud Run**: FastAPI serves both the API and the built React app, so there is one URL.
+The app deploys as a single Docker container on **Google Cloud Run**: FastAPI serves both the API and the built React app, so there is one URL.
 
-- Live URL: https://multimodal-rag-595510011861.asia-south1.run.app
 - `GEMINI_API_KEY` is set as a Cloud Run environment variable, not committed to the repo.
 - Cloud Run's disk is in-memory and the service scales to zero, so uploaded data is cleared when the instance restarts. Upload a short file to try it.
 - To redeploy from source:
