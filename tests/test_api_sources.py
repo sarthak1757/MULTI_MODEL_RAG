@@ -237,15 +237,26 @@ def test_source_graph_endpoint_returns_optional_graph_status(tmp_path: Path, mon
 
 def test_env_example_contains_service_configuration_placeholders() -> None:
     lines = Path(".env.example").read_text(encoding="utf-8").splitlines()
-    settings = {
-        line.split("=", 1)[0]: line.split("=", 1)[1]
-        for line in lines
-        if line and not line.startswith("#")
-    }
+    active = {}
+    commented = {}
+    for line in lines:
+        if "=" not in line:
+            continue
+        if line.startswith("# "):
+            key, value = line[2:].split("=", 1)
+            commented[key] = value
+        elif not line.startswith("#"):
+            key, value = line.split("=", 1)
+            active[key] = value
 
-    assert settings == {
+    # Copying the example must give a working SQLite-only setup.
+    assert active == {
         "GEMINI_API_KEY": "your_gemini_api_key_here",
         "GEMINI_MODEL": "gemini-3.6-flash",
+        "MIN_RETRIEVAL_SCORE": "0.2",
+    }
+    # Neo4j stays documented, but off until the user uncomments it.
+    assert commented == {
         "NEO4J_URI": "bolt://localhost:7687",
         "NEO4J_USERNAME": "neo4j",
         "NEO4J_PASSWORD": "change-this-for-local-development",
