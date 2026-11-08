@@ -24,6 +24,7 @@ from app.processing.event_builder import process_source
 from app.retrieval.vector_store import build_index
 from app.semantic.enricher import enrich_source
 from app.storage.database import (
+    clear_source_data,
     delete_source,
     get_event_observations,
     get_observation,
@@ -252,6 +253,8 @@ def api_process_source(source_id: str) -> dict[str, Any]:
     if source is None:
         raise HTTPException(status_code=404, detail="Source not found.")
 
+    # Start from a clean slate so a retry does not duplicate observations/events.
+    clear_source_data(source_id, DATABASE_PATH)
     update_source_status(source_id, SourceStatus.PROCESSING, DATABASE_PATH)
     stats: dict[str, Any] = {}
     try:
@@ -339,7 +342,15 @@ def api_query(request: QueryRequest) -> dict[str, Any]:
                     }
                     for item in bundle["ocr"]
                 ],
+                "documents": [
+                    {
+                        "page": item["metadata"].get("page"),
+                        "text": item["text"],
+                    }
+                    for item in bundle.get("documents", [])
+                ],
                 "entities": [entity["name"] for entity in bundle["entities"]],
+                "retrieval_path": result.get("retrieval_path", {"type": "vector"}),
                 "frames": [
                     {
                         "observation_id": item["id"],
@@ -356,6 +367,7 @@ def api_query(request: QueryRequest) -> dict[str, Any]:
         "used_modalities": payload["used_modalities"],
         "citations": payload["citations"],
         "error": payload.get("error"),
+        "graph": payload["retrieval"].get("graph"),
         "evidence": evidence,
     }
 

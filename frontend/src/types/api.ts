@@ -72,6 +72,13 @@ export interface EvidenceEvent {
   ocr: EvidenceOcr[];
   entities: string[];
   frames: EvidenceFrame[];
+  documents?: EvidenceDocument[];
+  retrieval_path?: { type: "vector" | "graph_expansion"; shared_entities?: string[] };
+}
+
+export interface EvidenceDocument {
+  page: number | null;
+  text: string;
 }
 
 export interface QueryResponse {
@@ -80,6 +87,7 @@ export interface QueryResponse {
   used_modalities: string[];
   citations: unknown[];
   error: string | null;
+  graph?: { enabled: boolean; status: string; error?: string } | null;
   evidence: EvidenceEvent[];
 }
 

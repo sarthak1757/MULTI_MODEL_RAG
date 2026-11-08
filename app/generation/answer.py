@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -9,6 +10,16 @@ from typing import Any
 from app.config import DATABASE_PATH, INDEXES_DIR
 from app.retrieval.hybrid import retrieve
 from app.semantic.gemini_client import GeminiClient, MissingGeminiAPIKeyError
+
+# Below this cosine similarity the top hit is treated as unrelated, and the
+# question is answered as "insufficient evidence" without calling the LLM.
+# Measured locally: on-topic questions scored 0.37-0.67, unrelated ones < 0.1.
+MIN_RETRIEVAL_SCORE = float(os.getenv("MIN_RETRIEVAL_SCORE", "0.2"))
+
+INSUFFICIENT_EVIDENCE_ANSWER = "The retrieved evidence is insufficient to answer this question."
+GENERATION_FAILED_ANSWER = (
+    "The answer could not be generated right now. The retrieved evidence is shown below."
+)
 
 
 def _clean_text(text: str) -> str:
@@ -145,15 +156,24 @@ def calculate_confidence(retrieval_payload: dict[str, Any]) -> float:
     score_gap = max(0.0, top_score - second_score)
     top_bundle = results[0]["evidence_bundle"]
     event_confidence = float(top_bundle["event"].get("confidence") or 0.5)
-    modalities = set()
-    if top_bundle["transcripts"]:
-        modalities.add("transcript")
-    if top_bundle["ocr"]:
-        modalities.add("ocr")
-    if top_bundle["frames"]:
-        modalities.add("frame")
-    modality_score = len(modalities) / 3
-    evidence_count = len(top_bundle["transcripts"]) + len(top_bundle["ocr"]) + len(top_bundle["frames"])
+    evidence_by_modality = {
+        "transcript": top_bundle.get("transcripts", []),
+        "ocr": top_bundle.get("ocr", []),
+        "frame": top_bundle.get("frames", []),
+        "image": top_bundle.get("images", []),
+        "document": top_bundle.get("documents", []),
+    }
+    present = {modality for modality, items in evidence_by_modality.items() if items}
+    # Score against what this kind of source can provide: a PDF page only ever
+    # has document text and an image only has the image plus its OCR.
+    if "document" in present:
+        expected = {"document"}
+    elif "image" in present:
+        expected = {"image", "ocr"}
+    else:
+        expected = {"transcript", "ocr", "frame"}
+    modality_score = len(present & expected) / len(expected)
+    evidence_count = sum(len(items) for items in evidence_by_modality.values())
     evidence_score = min(1.0, evidence_count / 5)
 
     confidence = (
@@ -169,7 +189,7 @@ def calculate_confidence(retrieval_payload: dict[str, Any]) -> float:
 def insufficient_evidence_response(query: str, retrieval_payload: dict[str, Any] | None = None) -> dict[str, Any]:
     return {
         "query": query,
-        "answer": "The retrieved evidence is insufficient to answer this question.",
+        "answer": INSUFFICIENT_EVIDENCE_ANSWER,
         "confidence": 0.0,
         "citations": [],
         "key_entities": [],
@@ -188,7 +208,8 @@ def answer_question(
     index_root: Path = INDEXES_DIR,
 ) -> dict[str, Any]:
     retrieval_payload = retrieve(source_id, query, top_k=top_k, db_path=db_path, index_root=index_root)
-    if not retrieval_payload.get("results"):
+    results = retrieval_payload.get("results") or []
+    if not results or float(results[0].get("score") or 0.0) < MIN_RETRIEVAL_SCORE:
         return insufficient_evidence_response(query, retrieval_payload)
 
     prompt = build_answer_prompt(query, compact_generation_context(retrieval_payload))
@@ -197,16 +218,19 @@ def answer_question(
         model_response = call_gemini_answer(gemini, prompt)
     except Exception as exc:
         response = insufficient_evidence_response(query, retrieval_payload)
+        response["answer"] = GENERATION_FAILED_ANSWER
         response["error"] = f"Answer generation failed: {exc}"
         return response
 
-    confidence = calculate_confidence(retrieval_payload)
+    citations = model_response.get("citations") or []
+    # An answer that cites nothing is the model declining to answer, so it
+    # should not carry a retrieval-based confidence score.
+    confidence = calculate_confidence(retrieval_payload) if citations else 0.0
     return {
         "query": query,
-        "answer": str(model_response.get("answer") or "").strip()
-        or "The retrieved evidence is insufficient to answer this question.",
+        "answer": str(model_response.get("answer") or "").strip() or INSUFFICIENT_EVIDENCE_ANSWER,
         "confidence": confidence,
-        "citations": model_response.get("citations") or [],
+        "citations": citations,
         "key_entities": model_response.get("key_entities") or [],
         "used_modalities": model_response.get("used_modalities") or [],
         "retrieval": retrieval_payload,

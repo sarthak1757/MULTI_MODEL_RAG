@@ -140,6 +140,19 @@ def project_source(source_id: str, client: CypherWriter, db_path=DATABASE_PATH) 
     ]
 
     ensure_graph_schema(client)
+    # Reprocessing gives observations and events new ids, so drop nodes from an
+    # earlier projection of this source that SQLite no longer has.
+    client.execute_write(
+        """
+        MATCH (:Source {id: $source_id})-[:HAS_OBSERVATION|HAS_EVENT]->(node)
+        WHERE NOT node.id IN $keep_ids
+        DETACH DELETE node
+        """,
+        {
+            "source_id": source.id,
+            "keep_ids": [observation.id for observation in observations] + [event.id for event in events],
+        },
+    )
     client.execute_write(
         "UNWIND $rows AS row MERGE (node:Source {id: row.id}) SET node += row",
         {"rows": [_source_properties(source)]},

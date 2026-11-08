@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import json
 
-from app.generation.answer import answer_question, build_answer_prompt, compact_generation_context
+from app.generation.answer import (
+    GENERATION_FAILED_ANSWER,
+    answer_question,
+    build_answer_prompt,
+    compact_generation_context,
+)
 
 
 class FakeGeminiClient:
@@ -216,6 +221,6 @@ def test_gemini_failure_is_handled_safely(monkeypatch) -> None:
 
     result = answer_question("source-1", "Why is English useful?", client=FakeGeminiClient(RuntimeError("boom")))
 
-    assert result["answer"] == "The retrieved evidence is insufficient to answer this question."
+    assert result["answer"] == GENERATION_FAILED_ANSWER
     assert result["confidence"] == 0.0
     assert "Answer generation failed" in result["error"]

@@ -118,7 +118,10 @@ def update_source_status(
     duration: float | None = None,
 ) -> None:
     existing = get_source(source_id, db_path)
-    merged_metadata = existing.metadata if existing else {}
+    merged_metadata = dict(existing.metadata) if existing else {}
+    if status != SourceStatus.FAILED:
+        # An error from an earlier failed attempt no longer applies.
+        merged_metadata.pop("error", None)
     if metadata:
         merged_metadata = {**merged_metadata, **metadata}
 
@@ -155,6 +158,19 @@ def delete_source(source_id: str, db_path: Path = DATABASE_PATH) -> bool:
     if source is None:
         return False
 
+    clear_source_data(source_id, db_path)
+    with get_connection(db_path) as connection:
+        connection.execute("DELETE FROM sources WHERE id = ?", (source_id,))
+
+    return True
+
+
+def clear_source_data(source_id: str, db_path: Path = DATABASE_PATH) -> None:
+    """Remove everything derived from a source but keep the source row itself.
+
+    Used before reprocessing so a retry starts clean instead of adding a second
+    copy of every observation and event.
+    """
     with get_connection(db_path) as connection:
         observation_rows = connection.execute(
             "SELECT id FROM observations WHERE source_id = ?",
@@ -200,9 +216,6 @@ def delete_source(source_id: str, db_path: Path = DATABASE_PATH) -> bool:
         )
         connection.execute("DELETE FROM semantic_events WHERE source_id = ?", (source_id,))
         connection.execute("DELETE FROM observations WHERE source_id = ?", (source_id,))
-        connection.execute("DELETE FROM sources WHERE id = ?", (source_id,))
-
-    return True
 
 
 def insert_observation(observation: Observation, db_path: Path = DATABASE_PATH) -> Observation:

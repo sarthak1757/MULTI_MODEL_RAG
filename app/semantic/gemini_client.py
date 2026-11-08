@@ -8,6 +8,10 @@ import urllib.request
 from typing import Any
 
 
+# Rate limits plus transient server-side errors (e.g. 503 "high demand").
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+
+
 class MissingGeminiAPIKeyError(RuntimeError):
     pass
 
@@ -59,7 +63,7 @@ class GeminiClient:
                     response_data = json.loads(response.read().decode("utf-8"))
                 return self._extract_text(response_data)
             except urllib.error.HTTPError as exc:
-                if exc.code == 429 and attempt < self.max_rate_limit_retries:
+                if exc.code in RETRYABLE_STATUS_CODES and attempt < self.max_rate_limit_retries:
                     time.sleep(2**attempt)
                     continue
                 if exc.code == 429:

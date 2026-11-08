@@ -12,7 +12,7 @@ import SourceSidebar from "./components/SourceSidebar";
 import SourceUploader from "./components/SourceUploader";
 import type { ProcessResult, QueryResponse, Source, SourceGraphResponse, TimelineEvent } from "./types/api";
 
-const DEFAULT_QUESTION = "Why is English useful for solving global problems?";
+const DEFAULT_QUESTION = "What are the key events in this source?";
 
 export default function App() {
   const [sources, setSources] = useState<Source[]>([]);
@@ -266,7 +266,10 @@ export default function App() {
           <aside className="contextRail">
             <ActiveSource source={activeSource} onChangeSource={() => setUploadOpen(true)} />
             <GraphPanel graph={sourceGraph} loading={loadingGraph} onRefresh={() => refreshSourceGraph()} />
-            <ProcessingProgress result={processResult} processing={processing} />
+            <ProcessingProgress
+              result={processResult && processResult.source_id === activeSource?.id ? processResult : null}
+              processing={processing}
+            />
             <section className="panel systemPanel">
               <span className="eyebrow">Workspace signal</span>
               <h2>Index overview</h2>
