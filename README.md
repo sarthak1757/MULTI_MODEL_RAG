@@ -11,6 +11,12 @@ answer that **cites the exact frame, transcript line or page it came from**.
 **Try it locally:** run the app (see Local Setup), upload [`samples/tcp-lecture-notes.pdf`](samples/tcp-lecture-notes.pdf)
 and ask *"Why does TCP need three segments to open a connection?"*
 
+<p align="center">
+  <img src="docs/screenshots/pdf-answer-with-document-evidence.jpg" width="49%" alt="Answer to a question about a PDF, citing the page text it used">
+  <img src="docs/screenshots/timeline-and-graph-panel-sqlite-only.jpg" width="49%" alt="Answer from a lecture video with transcript, frames and the event timeline">
+</p>
+<p align="center"><sub>Left: a PDF answer citing page 1. Right: a video answer with its transcript, extracted frames and event timeline.</sub></p>
+
 ## Problem Statement
 
 Useful information is locked inside recordings, screenshots and documents: a lecture video, a slide image, a PDF. Searching them means scrubbing through video or reading everything. Plain "chat with your file" tools also tend to give answers that are not tied to evidence, so you cannot tell what is true.
@@ -30,7 +36,7 @@ The app turns each uploaded file into **timestamped observations** (speech trans
 - **Three media types, one pipeline.** Video (speech + frames), images (OCR) and PDFs all become the same timestamped observations, so one retriever and one answer step serve all of them.
 - **Answers are evidence-first.** The LLM only sees the retrieved evidence bundle and must cite it; if retrieval finds too little, the app says so instead of guessing.
 - **Hybrid retrieval with graceful degradation.** FAISS semantic search, optionally expanded through a Neo4j entity graph. If Neo4j is down or unset, it falls back to FAISS-only with no code change.
-- **Tested and shipped.** 56 automated tests across ingestion, retrieval, graph and API layers, run on every push by CI alongside a type-checked frontend build. Deployed as a single Docker container on Cloud Run.
+- **Tested and shipped.** 67 automated tests across ingestion, retrieval, graph and API layers (including regression tests for every bug found in an end-to-end check), run on every push by CI alongside a type-checked frontend build. Deployed as a single Docker container on Cloud Run.
 - **Size:** ~3,900 lines of Python and ~1,100 lines of TypeScript.
 
 ## Key Features
