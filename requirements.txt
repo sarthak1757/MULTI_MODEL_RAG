@@ -1,15 +1,18 @@
-fastapi
-neo4j
-faster-whisper
+# Versions are pinned to the set verified end to end (PDF, image and video
+# ingestion, retrieval and answering) on Python 3.12. torch/torchvision are
+# installed separately in the Dockerfile from the CPU wheel index.
+fastapi==0.162.2
+neo4j==6.4.1
+faster-whisper==1.2.1
 # PyAV 19 removed the `metadata_errors` argument that faster-whisper 1.2.x still
 # passes to av.open(), which breaks video transcription.
-av<19
-easyocr
-opencv-python
-pydantic
-PyMuPDF
-python-dotenv
-python-multipart
-faiss-cpu
-sentence-transformers
-uvicorn[standard]
+av==18.1.0
+easyocr==1.7.2
+opencv-python==5.0.0.93
+pydantic==2.14.3
+PyMuPDF==2.1
+python-dotenv==1.2.4
+python-multipart==0.0.33
+faiss-cpu==1.15.1
+sentence-transformers==6.2.0
+uvicorn[standard]==0.54.0
