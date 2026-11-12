@@ -380,3 +380,41 @@ def test_failed_source_does_not_corrupt_ready_source(tmp_path: Path, monkeypatch
     statuses = {source["id"]: source["status"] for source in sources}
     assert statuses[ready_source.id] == "ready"
     assert statuses[failed_id] == "failed"
+
+
+def test_upload_over_size_limit_is_rejected_and_not_kept(tmp_path: Path, monkeypatch) -> None:
+    import app.main as main
+
+    db_path = tmp_path / "test.sqlite3"
+    upload_root = tmp_path / "uploads"
+    monkeypatch.setattr(main, "DATABASE_PATH", db_path)
+    monkeypatch.setattr(main, "UPLOADS_DIR", upload_root)
+    monkeypatch.setattr(main, "MAX_UPLOAD_MB", 1)
+    monkeypatch.setattr(main, "UPLOAD_CHUNK_BYTES", 64 * 1024)
+    client = TestClient(main.app)
+
+    too_big = b"x" * (1024 * 1024 + 1)
+    response = client.post("/api/sources/upload", files={"file": ("big.pdf", too_big, "application/pdf")})
+
+    assert response.status_code == 413
+    assert "1 MB" in response.json()["detail"]
+    assert list(upload_root.iterdir()) == []
+    assert client.get("/api/sources").json() == []
+
+
+def test_upload_within_size_limit_is_accepted(tmp_path: Path, monkeypatch) -> None:
+    import app.main as main
+
+    db_path = tmp_path / "test.sqlite3"
+    upload_root = tmp_path / "uploads"
+    monkeypatch.setattr(main, "DATABASE_PATH", db_path)
+    monkeypatch.setattr(main, "UPLOADS_DIR", upload_root)
+    monkeypatch.setattr(main, "MAX_UPLOAD_MB", 1)
+    client = TestClient(main.app)
+
+    response = client.post("/api/sources/upload", files={"file": ("small.pdf", b"%PDF-1.4 tiny", "application/pdf")})
+
+    assert response.status_code == 200
+    saved = list(upload_root.iterdir())
+    assert len(saved) == 1
+    assert saved[0].read_bytes() == b"%PDF-1.4 tiny"

@@ -65,6 +65,11 @@ IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
 PDF_EXTENSIONS = {".pdf"}
 ALLOWED_EXTENSIONS = VIDEO_EXTENSIONS | IMAGE_EXTENSIONS | PDF_EXTENSIONS
 
+# Uploads larger than this are rejected. On Cloud Run the disk lives in memory,
+# so one oversized upload could otherwise take the whole instance down.
+MAX_UPLOAD_MB = float(os.getenv("MAX_UPLOAD_MB", "200"))
+UPLOAD_CHUNK_BYTES = 1024 * 1024
+
 
 class QueryRequest(BaseModel):
     source_id: str
@@ -229,8 +234,25 @@ def api_upload_source(file: UploadFile = File(...)) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    max_bytes = int(MAX_UPLOAD_MB * 1024 * 1024)
+    written = 0
+    too_large = False
     with destination.open("wb") as output:
-        shutil.copyfileobj(file.file, output)
+        while True:
+            chunk = file.file.read(UPLOAD_CHUNK_BYTES)
+            if not chunk:
+                break
+            written += len(chunk)
+            if written > max_bytes:
+                too_large = True
+                break
+            output.write(chunk)
+    if too_large:
+        destination.unlink(missing_ok=True)
+        raise HTTPException(
+            status_code=413,
+            detail=f"File is larger than the {MAX_UPLOAD_MB:g} MB upload limit.",
+        )
 
     source_id = str(uuid4())
     source = insert_source(
