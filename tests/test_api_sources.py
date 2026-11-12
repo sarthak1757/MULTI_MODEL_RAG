@@ -418,3 +418,60 @@ def test_upload_within_size_limit_is_accepted(tmp_path: Path, monkeypatch) -> No
     saved = list(upload_root.iterdir())
     assert len(saved) == 1
     assert saved[0].read_bytes() == b"%PDF-1.4 tiny"
+
+
+def test_blank_or_oversized_question_is_rejected_before_answering(tmp_path: Path, monkeypatch) -> None:
+    import app.main as main
+
+    calls = []
+
+    def fake_answer(source_id: str, question: str) -> dict:
+        calls.append(question)
+        return {}
+
+    monkeypatch.setattr(main, "answer_question", fake_answer)
+    client = TestClient(main.app)
+
+    blank = client.post("/api/query", json={"source_id": "any", "question": "   "})
+    huge = client.post("/api/query", json={"source_id": "any", "question": "x" * 1001})
+
+    assert blank.status_code == 422
+    assert huge.status_code == 422
+    assert calls == []
+
+
+def test_question_whitespace_is_trimmed_before_answering(tmp_path: Path, monkeypatch) -> None:
+    import app.main as main
+
+    db_path = tmp_path / "test.sqlite3"
+    initialize_database(db_path)
+    source = insert_source(
+        Source(
+            id="trim-source",
+            filename="notes.pdf",
+            source_type=SourceType.PDF,
+            path="data/uploads/notes.pdf",
+            status=SourceStatus.READY,
+        ),
+        db_path,
+    )
+    monkeypatch.setattr(main, "DATABASE_PATH", db_path)
+    seen = []
+
+    def fake_answer(source_id: str, question: str) -> dict:
+        seen.append(question)
+        return {
+            "answer": "ok",
+            "confidence": 0.5,
+            "used_modalities": [],
+            "citations": [],
+            "retrieval": {"results": []},
+        }
+
+    monkeypatch.setattr(main, "answer_question", fake_answer)
+    response = TestClient(main.app).post(
+        "/api/query", json={"source_id": source.id, "question": "  What is TCP?  "}
+    )
+
+    assert response.status_code == 200
+    assert seen == ["What is TCP?"]

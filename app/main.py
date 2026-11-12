@@ -10,7 +10,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app.config import DATABASE_PATH, DATA_DIR, INDEXES_DIR, UPLOADS_DIR
 from app.generation.answer import answer_question
@@ -71,9 +71,23 @@ MAX_UPLOAD_MB = float(os.getenv("MAX_UPLOAD_MB", "200"))
 UPLOAD_CHUNK_BYTES = 1024 * 1024
 
 
+MAX_QUESTION_CHARS = 1000
+
+
 class QueryRequest(BaseModel):
     source_id: str
     question: str
+
+    @field_validator("question")
+    @classmethod
+    def question_must_have_text(cls, value: str) -> str:
+        # Reject blank or huge questions before they cost a retrieval and an LLM call.
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("Question must not be empty.")
+        if len(cleaned) > MAX_QUESTION_CHARS:
+            raise ValueError(f"Question must be at most {MAX_QUESTION_CHARS} characters.")
+        return cleaned
 
 
 def _source_type_for_suffix(suffix: str) -> SourceType:

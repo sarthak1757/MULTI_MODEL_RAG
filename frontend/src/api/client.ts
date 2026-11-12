@@ -13,13 +13,28 @@ export class ApiError extends Error {
   }
 }
 
+// FastAPI sends `detail` as a string for HTTPException, but as a list of
+// {msg} objects for request validation errors (HTTP 422).
+function detailMessage(detail: unknown, fallback: string): string {
+  if (typeof detail === "string") {
+    return detail;
+  }
+  if (Array.isArray(detail) && detail.length > 0) {
+    const first = detail[0] as { msg?: string };
+    if (first && typeof first.msg === "string") {
+      return first.msg.replace(/^Value error, /, "");
+    }
+  }
+  return fallback;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, options);
   if (!response.ok) {
     let message = `Request failed with HTTP ${response.status}`;
     try {
       const payload = await response.json();
-      message = payload.detail ?? message;
+      message = detailMessage(payload.detail, message);
     } catch {
       // Keep the generic message.
     }
