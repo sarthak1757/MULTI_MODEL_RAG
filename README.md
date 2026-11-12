@@ -36,7 +36,7 @@ The app turns each uploaded file into **timestamped observations** (speech trans
 - **Three media types, one pipeline.** Video (speech + frames), images (OCR) and PDFs all become the same timestamped observations, so one retriever and one answer step serve all of them.
 - **Answers are evidence-first.** The LLM only sees the retrieved evidence bundle and must cite it; if retrieval finds too little, the app says so instead of guessing.
 - **Hybrid retrieval with graceful degradation.** FAISS semantic search, optionally expanded through a Neo4j entity graph. If Neo4j is down or unset, it falls back to FAISS-only with no code change.
-- **Tested and shipped.** 67 automated tests across ingestion, retrieval, graph and API layers (including regression tests for every bug found in an end-to-end check), run on every push by CI alongside a type-checked frontend build. Deployed as a single Docker container on Cloud Run.
+- **Tested and shipped.** 73 automated tests across ingestion, retrieval, graph and API layers (including regression tests for every bug found in an end-to-end check), run on every push by CI alongside a type-checked frontend build. Deployed as a single Docker container on Cloud Run.
 - **Size:** ~3,900 lines of Python and ~1,100 lines of TypeScript.
 
 ## Key Features
@@ -131,6 +131,7 @@ Copy `.env.example` to `.env`. Never commit `.env`.
 | `GEMINI_MODEL` | No | Gemini model name (see `.env.example`) |
 | `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`, `NEO4J_DATABASE` | No | Enable the optional Neo4j graph. Leave unset to use SQLite and FAISS only |
 | `MIN_RETRIEVAL_SCORE` | No | Top retrieval score below which the app answers "insufficient evidence" without calling the LLM (default `0.2`) |
+| `MAX_UPLOAD_MB` | No | Largest accepted upload in MB (default `200`); bigger files get HTTP 413 |
 | `CORS_ORIGINS` | No | Extra allowed origins (comma separated) if the frontend is hosted elsewhere |
 | `VITE_API_BASE_URL` | No | Frontend build setting for the API URL (defaults to `http://localhost:8000`) |
 | `WHISPER_MODEL_SIZE`, `FRAME_INTERVAL_SECONDS`, `EASYOCR_LANGUAGES`, `DATABASE_PATH` | No | Processing settings with defaults |

@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, field_validator
 
-from app.config import DATABASE_PATH, DATA_DIR, INDEXES_DIR, UPLOADS_DIR
+from app.config import DATABASE_PATH, DATA_DIR, INDEXES_DIR, NEO4J_URI, UPLOADS_DIR
 from app.generation.answer import answer_question
 from app.graph.explorer import get_source_graph_if_configured
 from app.graph.sync import sync_source_if_configured
@@ -193,8 +193,21 @@ def health() -> dict[str, str]:
 
 
 @app.get("/api/health")
-def api_health() -> dict[str, str]:
-    return {"status": "ok"}
+def api_health() -> dict[str, Any]:
+    # Reports what is configured, never the values themselves, so a broken
+    # deployment can be diagnosed without exposing secrets.
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if NEO4J_URI:
+        graph_mode = "neo4j"
+    else:
+        graph_mode = "sqlite_only"
+    return {
+        "status": "ok",
+        "version": app.version,
+        "gemini_configured": bool(gemini_key),
+        "graph_mode": graph_mode,
+        "max_upload_mb": MAX_UPLOAD_MB,
+    }
 
 
 @app.get("/api/sources")

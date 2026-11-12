@@ -475,3 +475,29 @@ def test_question_whitespace_is_trimmed_before_answering(tmp_path: Path, monkeyp
 
     assert response.status_code == 200
     assert seen == ["What is TCP?"]
+
+
+def test_health_reports_configuration_without_secrets(monkeypatch) -> None:
+    import app.main as main
+
+    monkeypatch.setenv("GEMINI_API_KEY", "secret-key-value")
+    monkeypatch.setattr(main, "NEO4J_URI", "")
+    response = TestClient(main.app).get("/api/health")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["gemini_configured"] is True
+    assert body["graph_mode"] == "sqlite_only"
+    assert "secret-key-value" not in response.text
+
+
+def test_health_reports_missing_gemini_key_and_neo4j_mode(monkeypatch) -> None:
+    import app.main as main
+
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.setattr(main, "NEO4J_URI", "bolt://localhost:7687")
+    body = TestClient(main.app).get("/api/health").json()
+
+    assert body["gemini_configured"] is False
+    assert body["graph_mode"] == "neo4j"
